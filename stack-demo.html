@@ -1,0 +1,55 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>叠卡 v5 Demo</title><style>
+:root{--peek:44px;--gap:10px}
+body{margin:0;padding:20px 16px;background:#f6f5f1;font-family:system-ui;max-width:420px}
+h1{font-size:28px;margin:0 0 14px}
+/* ===== Stack kit v5 ===== */
+.stk{position:relative;transition:none}
+.stk .c{position:absolute;left:0;right:0;top:0;border-radius:16px;padding:12px 14px 14px;will-change:transform;
+ box-shadow:0 -1px 0 #0000000d,0 6px 16px -10px #0004;transform-origin:50% 0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.stk .c h3{margin:0;height:20px;font-size:15px;display:flex;justify-content:space-between}
+.stk .c ul{margin:10px 0 0;padding-left:18px;font-size:13px;line-height:1.7}
+.stk .c.press{filter:brightness(.94)}
+.c1{background:#c7c2ff}.c2{background:#d6ec3a}.c3{background:#fff}.c4{background:#111;color:#fff}
+@media (prefers-reduced-motion:reduce){.stk .c{transition:none!important}}
+</style></head><body>
+<h1>四大技巧</h1>
+<div class="stk" id="stk">
+ <div class="c c1"><h3>① 听 <span>3</span></h3><ul><li>先听懂再开口</li><li>每天 10 分钟跟读</li></ul></div>
+ <div class="c c2"><h3>② 说 <span>3</span></h3><ul><li>句块替换</li><li>一句话说三遍</li></ul></div>
+ <div class="c c3"><h3>③ 读 <span>2</span></h3><ul><li>先抓主干</li><li>不查词读完一段</li></ul></div>
+ <div class="c c4"><h3>④ 写 <span>2</span></h3><ul><li>只用 1368 词表达</li><li>每天写三句</li></ul></div>
+</div>
+<p style="margin-top:20px;color:#888;font-size:12px">示例内容。点任意卡展开或收起。</p>
+<script>
+/* ===== Stack kit v5 (copy into index-v5) ===== */
+function stackV5(box,{peek=44,gap=10}={}){
+  const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cards=[...box.children];let open=false,busy=null;
+  const H=()=>cards.map(c=>c.offsetHeight);                 // 提前量好每张卡真实高度
+  const ys=(o)=>{const h=H();let acc=0;return cards.map((c,i)=>{const y=o?acc:i*peek;acc+=h[i]+gap;return y})};
+  const boxH=(o)=>{const h=H(),y=ys(o);return y[y.length-1]+h[h.length-1]};
+  const place=(o)=>{ys(o).forEach((y,i)=>{cards[i].style.transform=`translateY(${y}px)`;cards[i].style.zIndex=i+1});box.style.height=boxH(o)+'px'};
+  place(false);
+  const cur=c=>{const m=new DOMMatrixReadOnly(getComputedStyle(c).transform);return m.m42};
+  box.addEventListener('pointerdown',e=>{const c=e.target.closest('.c');if(!c)return;c.classList.add('press');
+    c.animate([{transform:c.style.transform},{transform:c.style.transform+' scale(.98)'}],{duration:120,easing:'ease-out',fill:'forwards'}).id='press'});
+  const unpress=()=>cards.forEach(c=>{c.classList.remove('press');c.getAnimations().filter(a=>a.id==='press').forEach(a=>a.cancel())});
+  box.addEventListener('pointerup',unpress);box.addEventListener('pointercancel',unpress);
+  box.addEventListener('click',()=>{
+    const from=cards.map(cur);open=!open;
+    const to=ys(open);
+    if(open)box.style.height=boxH(true)+'px';               // 展开：先撑高容器，下面内容一次到位
+    cards.forEach((c,i)=>{c.getAnimations().forEach(a=>a.cancel());c.style.transform=`translateY(${to[i]}px)`});
+    if(RM){place(open);return}
+    const anims=cards.map((c,i)=>c.animate(
+      [{transform:`translateY(${from[i]}px)`},{transform:`translateY(${to[i]}px)`}],
+      open?{duration:420,delay:i*50,easing:'linear(0,.09 6%,.32 14%,.62 24%,.86 36%,.99 48%,1.025 60%,1.01 76%,1)',fill:'backwards'}
+          :{duration:340,delay:0,easing:'cubic-bezier(.32,.72,0,1)'}));
+    const token=busy={};
+    Promise.all(anims.map(a=>a.finished)).then(()=>{if(busy===token&&!open)box.style.height=boxH(false)+'px'}).catch(()=>{});
+  });
+  addEventListener('resize',()=>place(open));
+}
+stackV5(document.getElementById('stk'));
+</script></body></html>
