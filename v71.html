@@ -560,6 +560,10 @@ main>section[hidden]{display:flex;content-visibility:hidden;visibility:hidden;po
 .bwcard .btn{margin-top:12px;flex:none}
 .bwcard .u{padding:6px 0}
 @media (max-height:700px){.bwcard{padding:10px 16px}.bwcard .t{font-size:30px;line-height:36px}.bwcard .u{padding:1px 0}.bwcard .u .e{font-size:15px;line-height:19px}.bwcard .u .z{font-size:12px;line-height:16px}.bwcard .btn{margin-top:8px;min-height:44px}}
+#vSnap .track{display:flex;flex-direction:column;box-sizing:border-box;min-height:100%;padding:0 0 0 34px}
+#vSnap .sl-card{height:auto;flex:1 1 0;min-height:64px;max-height:170px;margin:0 0 10px;display:flex;flex-direction:column;justify-content:center}
+#vSnap .sl-card:last-of-type{margin-bottom:0}
+#vSnap .sl-card p{white-space:normal;overflow:visible;text-overflow:clip}
 </style>
 </head>
 <body>
@@ -889,10 +893,10 @@ function snapLine(box,items,{onPick,onOpen}={}){
     c.innerHTML=`<i class="tint" style="background:${SL.colors[i%SL.colors.length]}"></i><b>${it.w}<small>${it.zh}</small></b><p>${it.ex}</p>`;track.appendChild(c);return c});
   const dots=cards.map(()=>{const d=document.createElement('i');d.className='sl-dot';track.appendChild(d);return d});
   let cy=[],cur=-1,raf=0,timer=0;const segs=[];
-  let a0=0;const measure=()=>{cy=cards.map(c=>c.offsetTop+c.offsetHeight/2);a0=cy[0]||0;dots.forEach((d,i)=>d.style.top=(cy[i]-6)+'px');track.style.paddingBottom=Math.max(0,box.clientHeight-(cards.at(-1)?.offsetHeight||0)-12)+'px'};   // 只在加载/尺寸变化时量
-  const frame=()=>{raf=0;const mid=box.scrollTop+a0;
+  let a0=0;const measure=()=>{cy=cards.map(c=>c.offsetTop+c.offsetHeight/2);a0=cy[0]||0;dots.forEach((d,i)=>d.style.top=(cy[i]-6)+'px');};   // 只在加载/尺寸变化时量
+  let force=-1;const frame=()=>{raf=0;const mid=force>=0&&cy[force]!=null?cy[force]:box.scrollTop+a0;
     cards.forEach((c,i)=>{const t=Math.min(1,Math.abs(cy[i]-mid)/SL.tintR);c.style.transform=`scale(${1-SL.scale*t})`;c.firstChild.style.opacity=(1-t)*(1-t)})};
-  function settle(){if(!box.clientHeight)return;const mid=box.scrollTop+a0;let best=0,d=1e9;
+  function settle(){if(!box.clientHeight)return;const mid=force>=0&&cy[force]!=null?cy[force]:box.scrollTop+a0;let best=0,d=1e9;
     cy.forEach((y,i)=>{const dd=Math.abs(y-mid);if(dd<d){d=dd;best=i}});
     if(best===cur)return;const prev=cur;cur=best;
     dots.forEach((x,i)=>x.classList.toggle('on',i===best));cards.forEach((c,i)=>c.setAttribute('aria-current',i===best));onPick&&onPick(best);
@@ -907,7 +911,7 @@ function snapLine(box,items,{onPick,onOpen}={}){
   box.addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(frame);clearTimeout(timer);timer=setTimeout(settle,SL.settle)},{passive:true});
   if('onscrollend' in box)box.addEventListener('scrollend',()=>{clearTimeout(timer);timer=setTimeout(settle,0)});
   box.addEventListener('click',e=>{const c=e.target.closest('.sl-card');if(!c)return;const i=+c.dataset.i;
-    if(i!==cur)box.scrollTo({top:cy[i]-a0,behavior:RM()?'auto':'smooth'});else onOpen&&onOpen(i,c,e)});
+    if(i!==cur&&box.scrollHeight<=box.clientHeight+1){force=i;frame();settle()}else if(i!==cur)box.scrollTo({top:cy[i]-a0,behavior:RM()?'auto':'smooth'});else onOpen&&onOpen(i,c,e)});
   box.addEventListener('keydown',e=>{const c=e.target.closest('.sl-card');if(c&&(e.key==='Enter'||e.key===' ')){e.preventDefault();c.click()}});
   new ResizeObserver(()=>{if(!box.clientHeight)return;measure();frame()}).observe(box);
   box._center=(i=cur<0?0:cur)=>{if(!box.clientHeight)return;measure();box.scrollTop=cy[i]-a0;frame();setTimeout(settle,60)};
@@ -1178,7 +1182,7 @@ function markLearned(){const L=ld("learnedBig",{});document.querySelectorAll(".l
 /* 划线：一次最多 5 行，「换一组」翻页 */
 const SLK=Object.keys(BIG),SLN=Math.ceil(SLK.length/5);let slG=0;
 SL.colors=['var(--c-lav)','var(--c-sage)','var(--c-coral)','var(--c-peri)','var(--c-butter)','var(--c-mint)'];
-function renderLine(){const ks=SLK.slice(slG*5,slG*5+5);
+function renderLine(){const ks=Array.from({length:5},(_,j)=>SLK[(slG*5+j)%SLK.length]);   // 21 个词分 5 组；第 5 组 feel 后面从头补满 5 行
   snapLine($("#vSnap"),ks.map(k=>({w:k,zh:BIG[k][0],ex:BIG[k][1][0][1]})),{onOpen:i=>say(ks[i])});
   $("#slTxt").textContent=`第 ${slG+1}/${SLN} 组`;$("#lDots").innerHTML=Array.from({length:SLN},(_,i)=>`<i class="${i===slG?"on":""}"></i>`).join("");}
 $("#slNext").onclick=()=>{slG=(slG+1)%SLN;const v=$("#vSnap");
