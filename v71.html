@@ -561,9 +561,13 @@ main>section[hidden]{display:flex;content-visibility:hidden;visibility:hidden;po
 .bwcard .u{padding:6px 0}
 @media (max-height:700px){.bwcard{padding:10px 16px}.bwcard .t{font-size:30px;line-height:36px}.bwcard .u{padding:1px 0}.bwcard .u .e{font-size:15px;line-height:19px}.bwcard .u .z{font-size:12px;line-height:16px}.bwcard .btn{margin-top:8px;min-height:44px}}
 #vSnap .track{display:flex;flex-direction:column;box-sizing:border-box;min-height:100%;padding:0 0 0 34px}
-#vSnap .sl-card{height:auto;flex:1 1 0;min-height:64px;max-height:170px;margin:0 0 10px;display:flex;flex-direction:column;justify-content:center}
+#vSnap .sl-card{height:auto;flex:1 1 0;min-height:60px;max-height:120px;margin:0 0 10px;display:flex;flex-direction:column;justify-content:center}
 #vSnap .sl-card:last-of-type{margin-bottom:0}
 #vSnap .sl-card p{white-space:normal;overflow:visible;text-overflow:clip}
+#vSnap .sl-card{max-height:120px;padding:10px 14px}
+#vSnap .sl-card b{align-items:flex-start}
+#vSnap .sl-card small{white-space:normal;overflow:visible;text-overflow:clip;max-width:66%;text-align:right;line-height:16px;padding-top:4px}
+@media (max-height:760px){#vSnap .sl-card{margin-bottom:6px;padding:7px 12px}#vSnap .sl-card b{font-size:22px;line-height:26px}#vSnap .sl-card small{font-size:12px;line-height:15px;padding-top:2px}#vSnap .sl-card p{font-size:13px;line-height:17px;margin-top:3px}}
 </style>
 </head>
 <body>
@@ -676,6 +680,10 @@ const BIG = {
  leave:["离开，或留下",[["离开","I leave work at six.","我六点下班。"],["留下","Leave a message.","留个言。"],["让保持","Leave the door open.","门开着吧。"],["交给","Leave it to me.","交给我吧。"]]],
  work:["运转、起作用",[["工作","She works at a bank.","她在银行上班。"],["起作用","The medicine worked.","药管用了。"],["运转","The lift doesn't work.","电梯坏了。"],["解决","It'll work out.","会好起来的。"]]],
  look:["把目光放到某处",[["看","Look at this.","看这个。"],["看起来","You look tired.","你看起来很累。"],["寻找","I'm looking for my keys.","我在找钥匙。"],["照顾","Look after yourself.","照顾好自己。"]]],
+ find:["找到、发现，或觉得",[["找到","I can't find my keys.","我找不到钥匙了。"],["发现","I found the book very useful.","我发现这本书很有用。"],["觉得","How do you find your new job?","你觉得新工作怎么样？"],["查明","Let's find out the truth.","我们查清真相吧。"]]],
+ tell:["把信息说给别人",[["告诉","Tell me your name.","告诉我你的名字。"],["讲","She told us a story.","她给我们讲了个故事。"],["叫（某人做）","He told me to wait.","他让我等着。"],["分辨","I can't tell them apart.","我分不清他俩。"]]],
+ show:["让别人看到",[["给……看","Show me your photos.","给我看看你的照片。"],["带路","I'll show you the way.","我给你带路。"],["表明","The test shows he is fine.","检查显示他没事。"],["露面","He didn't show up.","他没来。"]]],
+ call:["出声叫，或打电话",[["打电话","Call me tonight.","今晚给我打电话。"],["叫作","We call him Big Tom.","我们叫他大汤姆。"],["喊","Someone is calling you.","有人在喊你。"],["取消","They called off the game.","比赛取消了。"]]],
  feel:["用身体或心去感受",[["感觉","I feel sick.","我不舒服。"],["摸起来","This feels soft.","这摸起来很软。"],["想要","I feel like a walk.","我想去走走。"],["认为","I feel it's too late.","我觉得太晚了。"]]]
 };
 
@@ -1182,7 +1190,7 @@ function markLearned(){const L=ld("learnedBig",{});document.querySelectorAll(".l
 /* 划线：一次最多 5 行，「换一组」翻页 */
 const SLK=Object.keys(BIG),SLN=Math.ceil(SLK.length/5);let slG=0;
 SL.colors=['var(--c-lav)','var(--c-sage)','var(--c-coral)','var(--c-peri)','var(--c-butter)','var(--c-mint)'];
-function renderLine(){const ks=Array.from({length:5},(_,j)=>SLK[(slG*5+j)%SLK.length]);   // 21 个词分 5 组；第 5 组 feel 后面从头补满 5 行
+function renderLine(){const ks=SLK.slice(slG*5,slG*5+5);   // 25 个词，5 组 × 5 行，不重复
   snapLine($("#vSnap"),ks.map(k=>({w:k,zh:BIG[k][0],ex:BIG[k][1][0][1]})),{onOpen:i=>say(ks[i])});
   $("#slTxt").textContent=`第 ${slG+1}/${SLN} 组`;$("#lDots").innerHTML=Array.from({length:SLN},(_,i)=>`<i class="${i===slG?"on":""}"></i>`).join("");}
 $("#slNext").onclick=()=>{slG=(slG+1)%SLN;const v=$("#vSnap");
